@@ -140,6 +140,7 @@ Result:
 Prisma Client offers various queries to read data from your database. In this section, you'll use the `findMany` query that returns all the records in the database for a given model.
 
 Delete the previous Prisma Client query and add the new `findMany` query instead:
+>script.ts
 ```
 const users = await prisma.user.findMany()
 
@@ -172,11 +173,11 @@ const prisma = new PrismaClient()
 async function main() {
   const user = await prisma.user.create({
     data: {
-      name: 'Bob',
-      email: 'bob@prisma.io',
+      name: 'Anvarjon',
+      email: 'anvarjon@gmail.com',
       posts: {
         create: {
-          title: 'Hello World',
+          title: 'Hello, Anvarjon!',
         },
       },
     },
@@ -197,5 +198,66 @@ main()
 
 Run the query by executing the script again:
 ```
-{ id: 2, email: 'bob@prisma.io', name: 'Bob' }
+npx ts-node script.ts
+```
+
+Result:
+```
+{ id: 2, email: 'anvarjon@gmail.com', name: 'Anvarjon' }
+```
+
+By default, Prisma only returns scalar fields in the result objects of a query. That's why, even though you also created a new `Post` record for the new `User` record, the console only printed an object with three scalar fields: `id`, `email` and `name`.
+
+In order to also retrieve the `Post` records that belong to a `User`, you can use the `include` option via the `posts` relation field:
+
+>script.ts
+
+```
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
+async function main() {
+  const usersWithPosts = await prisma.user.findMany({
+    include: {
+      posts: true,
+    },
+  })
+  console.dir(usersWithPosts, { depth: null })
+}
+
+main()
+  .then(async () => {
+    await prisma.$disconnect()
+  })
+  .catch(async (e) => {
+    console.error(e)
+    await prisma.$disconnect()
+    process.exit(1)
+  })
+```
+
+Run the script again to see the results of the nested read query:
+```
+npx ts-node script.ts
+```
+Result
+```
+[
+  { id: 1, email: 'shodlik@gmail.com', name: 'Shodlik', posts: [] },
+  {
+    id: 2,
+    email: 'anvarjon@gmail.com',
+    name: 'Anvarjon',
+    posts: [
+      {
+        id: 1,
+        title: 'Hello, Anvarjon!',
+        content: null,
+        published: false,
+        authorId: 2
+      }
+    ]
+  }
+]
 ```
